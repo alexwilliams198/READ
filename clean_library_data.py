@@ -1,37 +1,114 @@
-# Importing libraries
 import pandas as pd
+from sqlalchemy import create_engine
+#import pyodbc
 
-# Loading the data
-df = pd.read_csv("librarydata.csv")
+# Function to output dataframe that can be manipulated via a filepath
+def fileLoader(filepath):
+    data = pd.read_csv(filepath)
+    return data 
 
+# Duplicate Dropping Function
+def duplicateCleaner(df):
+    return df.drop_duplicates().reset_index(drop=True)
 
-# Transformation Steps 
+# NA handler - future scope can handle errors more elegantly. 
+def naCleaner(df):
+    return df.dropna().reset_index(drop=True)
 
-df.dropna(subset=['Books', 'Customer ID'], inplace=True)
+# Turning date columns into datetime
+def dateCleaner(col, df):
+    #date_errors = pd.DataFrame(columns=df.columns)  # Store rows with date errors
 
-df['Books'] = df['Books'].str.strip()
+    # Strip any quotes from dates
+    df[col] = df[col].str.replace('"', "", regex=True)
 
-df.drop_duplicates(subset=['Books','Customer ID', 'Book checkout'], inplace=True)
+    try:
+        df[col] = pd.to_datetime(df[col], dayfirst=True, errors='coerce')
 
-df = df[df['Book checkout'].notnull() & df['Book Returned'].notnull()]
+    except Exception as e:
+        print(f"Error while converting column {col} to datetime: {e}")
 
-df.reset_index(drop=True, inplace=True)
+    # Identify rows with invalid dates
+    error_flag = pd.to_datetime(df[col], dayfirst=True, errors='coerce').isna()
+        
+    # Move invalid rows to date_errors - Future feature
+    #date_errors = df[error_flag]
+        
+    # Keep only valid rows in df
+    df = df[~error_flag].copy()
 
-df['Book checkout'] = df['Book checkout'].astype(str).str.replace('"', '').str.strip()
+    # Reset index for the cleaned DataFrame
+    df.reset_index(drop=True, inplace=True)
 
-df['Book checkout'] = pd.to_datetime(df['Book checkout'], dayfirst=True, errors='coerce')
-df['Book Returned'] = pd.to_datetime(df['Book Returned'], dayfirst=True, errors='coerce')
+    return df
 
-cutoff_date = pd.to_datetime('2024-12-31')
-df = df[df['Book checkout'] <= cutoff_date]
+def enrich_dateDuration(colA, colB, df):
+    """
+    Takes the two datetime input column names and the dataframe to create a new column date_delta which is the difference, in days, between colA and colB.
+    
+    Note:
+    colB>colA
+    """
+    df['date_delta'] = (df[colB]-df[colA]).dt.days
 
+    #Conditional Filtering to be able to gauge eroneous loans.
+    df.loc[df['date_delta'] < 0, 'valid_loan_flag'] = False
+    df.loc[df['date_delta'] >= 0, 'valid_loan_flag'] = True
 
-# Exporting to CSV code
+    return df
 
-df.to_csv('cleanedlibrarydata1.csv', index=False)
+def writeToSQL(df, table_name, server, database):
 
+    # Create the connection string with Windows Authentication
+    connection_string = f'mssql+pyodbc://@{server}/{database}?trusted_connection=yes&driver=ODBC+Driver+17+for+SQL+Server'
 
+    # Create the SQLAlchemy engine
+    engine = create_engine(connection_string)
 
+    try:
+        # Write the DataFrame to SQL Server
+        df.to_sql(table_name, con=engine, if_exists='replace', index=False)
 
+        print(f"Table{table_name} written to SQL")
+    except Exception as e:
+        print(f"Error writing to the SQL Server: {e}")
 
+if __name__ == '__main__':
+    print('**************** Starting Clean ****************')
 
+    # Instantiation
+    #dropCount= 0
+    #customer_drop_count = 0
+    filepath_input = 'librarydata.csv'
+    date_columns = ['Book checkout', 'Book Returned']
+    date_errors = None
+
+    data = fileLoader(filepath=filepath_input)
+
+    # Drop duplicates & NAs
+    data = duplicateCleaner(data)
+    data = naCleaner(data)
+
+    # Converting date columns into datetime
+    for col in date_columns:
+        data = dateCleaner(col, data)
+    
+    # Enriching the dataset
+    data = enrich_dateDuration(df=data, colA='Book Returned', colB='Book checkout')
+
+    #data.to_csv('cleaned_file.csv')
+    print(data)
+
+    #Cleaning the customer file
+    filepath_input_2 = 'librarydatacustomers.csv'
+
+    data2 = fileLoader(filepath=filepath_input_2)
+
+    # Drop duplicates & NAs
+    data2 = duplicateCleaner(data2)
+    data2 = naCleaner(data2)
+
+    print(data2)
+    print('**************** DATA CLEANED ****************')
+
+   
