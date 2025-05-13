@@ -1,8 +1,11 @@
 # Importing libraries
 import pandas as pd
 
-# Transformation Steps 
+# Loading the data
+df = pd.read_csv("librarydata.csv")
 
+
+# Transformation Steps 
 
 df.dropna(subset=['Books', 'Customer ID'], inplace=True)
 
