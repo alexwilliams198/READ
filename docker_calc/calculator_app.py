@@ -13,6 +13,14 @@ class Calculator:
 
     def do_divide(self):
         return self.a / self.b
-
+    
+    def times_table(self):
+        results = []
+        for i in range (1, self.b + 1):
+            results.append(
+            
+            (f"{self.a} x {i} = {self.a * i}")
+            )
+            return results
 #myCalc = Calculator(11,6)
 #print(myCalc.do_sum()) 
