@@ -8,6 +8,6 @@ The proposed solution for the MVP:
 ![diagram1](./references/architecture.drawio.png)
 
 
-## Kanban
+Kanban
 
-![diagram2](./references/kanban.drawio.png)
+![diagram2](./references/Kanban.drawio.png)
