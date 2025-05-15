@@ -9,7 +9,7 @@ The proposed solution for the MVP:
 Final Solution
 
 
-![diagram1](./references/architecture.drawio.png)
+![diagram1](./references/Architecture.drawio.png)
 
 
 Kanban
