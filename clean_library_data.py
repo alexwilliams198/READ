@@ -79,15 +79,25 @@ if __name__ == '__main__':
     # Instantiation
     #dropCount= 0
     #customer_drop_count = 0
-    filepath_input = 'librarydata.csv'
+    filepath_input = './data/librarydata.csv'
     date_columns = ['Book checkout', 'Book Returned']
     date_errors = None
 
     data = fileLoader(filepath=filepath_input)
 
+    # count data before dropping duplicates
+    initial_rows = len(data)
+
     # Drop duplicates & NAs
     data = duplicateCleaner(data)
     data = naCleaner(data)
+
+    #count data after dropping duplicates
+    final_rows = len(data)
+
+    #calculate number dropped rows
+    dropped_row_count = initial_rows - final_rows
+    print(f'Number of rows dropped: {dropped_row_count}')
 
     # Converting date columns into datetime
     for col in date_columns:
@@ -100,7 +110,7 @@ if __name__ == '__main__':
     print(data)
 
     #Cleaning the customer file
-    filepath_input_2 = 'librarydatacustomers.csv'
+    filepath_input_2 = './data/librarydatacustomers.csv'
 
     data2 = fileLoader(filepath=filepath_input_2)
 
