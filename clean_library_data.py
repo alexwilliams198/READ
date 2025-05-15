@@ -30,6 +30,9 @@ def dateCleaner(col, df):
 
     # Identify rows with invalid dates
     error_flag = pd.to_datetime(df[col], dayfirst=True, errors='coerce').isna()
+
+    invalid_count = error_flag.sum()
+    print(f"Invalid dates in '{col}': {invalid_count}")
         
     # Move invalid rows to date_errors - Future feature
     #date_errors = df[error_flag]
@@ -106,8 +109,20 @@ if __name__ == '__main__':
     # Enriching the dataset
     data = enrich_dateDuration(df=data, colA='Book Returned', colB='Book checkout')
 
-    #data.to_csv('cleaned_file.csv')
-    print(data)
+    #Calculate duration
+    data['Duration'] = (data['Book Returned'] - data['Book checkout']).dt.days
+
+    #Identify negative durations
+    negative_rows = data[data['Duration'] < 0]
+
+    #Count negative entries
+    negative_count = len(negative_rows)
+
+    print(f'Total negative durations: {negative_count}')
+
+
+    data.to_csv('books_cleaned.csv')
+    #print(data)
 
     #Cleaning the customer file
     filepath_input_2 = './data/librarydatacustomers.csv'
@@ -118,7 +133,8 @@ if __name__ == '__main__':
     data2 = duplicateCleaner(data2)
     data2 = naCleaner(data2)
 
-    print(data2)
+    data2.to_csv('customers_cleaned.csv')
+    #print(data2)
     print('**************** DATA CLEANED ****************')
 
    
