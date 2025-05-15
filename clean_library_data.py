@@ -122,7 +122,7 @@ if __name__ == '__main__':
 
 
     data.to_csv('books_cleaned.csv')
-    #print(data)
+    print(data)
 
     #Cleaning the customer file
     filepath_input_2 = './data/librarydatacustomers.csv'
